@@ -1,4 +1,4 @@
-unifi application with mongodb docker-compose.yml that runs on pi3/4
+## unifi application with mongodb docker-compose.yml that runs on pi3/4
 
 clone this into a directory
 
@@ -11,7 +11,7 @@ This expects that the unifi controller will run on a dedicated externally define
     docker network create
 
 
-and run static IP.  I use an ipvlan network for this, as all of my APs run on a management vlan that doesn't have internet access through the firewall.  Tweak as necessary.
+and specify the name of the network created as MANAGEMENT_NETWORK in .env .  This is meant to run with a static IP within the subnet defined in the network, defined as UNIFI_ADDRESS in the .env.  I use an ipvlan network for this, as all of my APs run on a management vlan that doesn't have internet access through the firewall.  Tweak as necessary.
 
 docker compose up -d and enjoy!
 
