@@ -10,7 +10,6 @@ This expects that the unifi controller will run on a dedicated externally define
 
     docker network create
 
-
 and specify the name of the network created as MANAGEMENT_NETWORK in .env .  This is meant to run with a static IP within the subnet defined in the network, defined as UNIFI_ADDRESS in the .env.  I use an ipvlan network for this, as all of my APs run on a management vlan that doesn't have internet access through the firewall.  Tweak as necessary.
 
 
@@ -21,6 +20,8 @@ As an example, this is how I created my vlan network for my management network, 
 
 docker compose up -d and enjoy!
 
+
+Included also is an [acme.sh deploy hook](unifi_deploy.sh) meant to be run on the docker host without requiring the docker container to have network access, and without requiring the docker host to have a jdk / keytool installed.
 
 ### NOTE: if you're on a raspberry PI, you need to do this in order for ipvlan / macvlan networks to work (assuing ubuntu or likely debian) and reboot:
 
