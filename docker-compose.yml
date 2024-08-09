@@ -38,8 +38,9 @@ services:
       - MONGO_AUTHSOURCE= #optional
     volumes:
       - ./unifi-data:/config
-    ports:
+    ports: # these are meaningless for macvlan and ipvlan networks
       - 8443:8443
+      - 443:443
       - 3478:3478/udp
       - 10001:10001/udp
       - 8080:8080
