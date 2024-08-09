@@ -1,3 +1,7 @@
-*
+/**
+
 !.gitignore
-!./data/backup/autobackup/.gitignore
+!data/
+!data/backup
+!data/backup/autobackup
+!data/backup/autobackup.gitignore
