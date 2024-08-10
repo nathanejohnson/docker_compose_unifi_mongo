@@ -35,11 +35,13 @@ If this variable isn't set, it will attempt to use ${HOME}/docker_compose_unifi_
 
 There are two other variables that can be set:
 
-UNIFI_DATA_DIR if you're moved the unifi data directory volume mount location.  Defaults to "${UNIFI_DOCKER_DIR}/unifi-data/data"
+    UNIFI_DATA_DIR 
+if you're moved the unifi data directory volume mount location.  Defaults to "${UNIFI_DOCKER_DIR}/unifi-data/data"
 
-UNIFI_CONTAINER_NAME if you've changed the name of the unifi container.  Defaults to unifi-network-application
+    UNIFI_CONTAINER_NAME
+if you've changed the name of the unifi container.  Defaults to unifi-network-application
 
-This saves the state into the acme.sh configuration variables, so it should persist when running subsequently from cron after the initial invocation.
+This deploy hook saves the state into the acme.sh configuration variables, so it should persist when running subsequently from cron after the initial invocation.
 
 ### NOTE: if you're on a raspberry PI, you need to do this in order for ipvlan / macvlan networks to work (assuing ubuntu or likely debian) and reboot:
 
