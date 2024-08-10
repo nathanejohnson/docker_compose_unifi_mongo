@@ -8,20 +8,10 @@
 
 #tweak below as necessary
 
-# where you cloned this repo
-REPO_DIR=${HOME}/unifi
-
-# the rest are sensible defaults
-
-# this is the directory on your docker host that gets mounted to as the config dir
-HOST_DATADIR="${REPO_DIR}/unifi-data/data"
-
-# this is the default set in the docker-compose.yml
-UNIFI_CONTAINER=unifi-network-application
-
-
-# this password is the default keystore passphrase for unifi network application, probably keep that the same.
-PASS=aircontrolenterprise
+# make sure to set UNIFI_DOCKER_DIR to the location where you cloned this repo.
+# additionally, you can override the values for HOST_DATADIR and UNIFI_CONTAINER
+# if needed, though the defaults should work unless you've changed things
+# in the docker-compose file.
 
 unifi_docker_deploy() {
 	_cdomain="$1"
@@ -29,14 +19,60 @@ unifi_docker_deploy() {
 	_ccert="$3"
 	_cca="$4"
 	_cfullchain="$5"
-	echo running for $_cdomain
+	_debug _cdomain "$_cdomain"
+	_debug _ckey "$_ckey"
+	_debug _ccert "$_ccert"
+	_debug _cca "$_cca"
+	_debug _cfullchain "$_cfullchain"
+
+	if ! _exists "docker"; then
+		_err "docker not found"
+		return 1
+	fi
+
+	_getdeployconf UNIFI_DOCKER_DIR
+	_default_dcumd="${HOME}/docker_compose_unifi_mongo"
+	if [ -z "$UNIFI_DOCKER_DIR" ]; then
+		if [ -d ${_default_dcumd} ]; then
+			_debug "using ${_default_dcumd} as default UNIFI_DOCKER_DIR"
+			UNIFI_DOCKER_DIR="${_default_dcumd}"
+		else
+			_err "must set UNIFI_DOCKER_DIR environment variable to the directory where the docker_compose_unifi_mongo repository was cloned"
+			return 1
+		fi
+	fi
+	_debug "UNIFI_DOCKER_DIR is ${UNIFI_DOCKER_DIR}"
+
+	_getdeployconf HOST_DATADIR
+	if [ -z "${HOST_DATADIR}" ]; then
+		HOST_DATADIR="${UNIFI_DOCKER_DIR}/unifi-data/data"
+	fi
+	_debug "HOST_DATADIR is $HOST_DATADIR"
+
+	_getdeployconf UNIFI_CONTAINER
+	if [ -z "${UNIFI_CONTAINER}" ]; then
+		UNIFI_CONTAINER=unifi-network-application
+	fi
+
+	_debug "UNIFI_CONTAINER is ${UNIFI_CONTAINER}"
+
+	# this password is the default keystore passphrase for unifi network application, probably keep that the same.
+	PASS=aircontrolenterprise
 
 	P12="${_cdomain}.p12"
 	CNT_DATADIR=/usr/lib/unifi/data
 	KEYTOOL=/usr/bin/keytool
+	HOST_P12="${HOST_DATADIR}/${P12}"
 	set -e
-	openssl pkcs12 -export -inkey "${_ckey}" -in "${_ccert}" \
-		-out "${HOST_DATADIR}/${P12}" -name unifi -password pass:${PASS}
+	if [ ! -w $(dirname "${HOST_P12}") ]; then
+		_err "The file ${HOST_P12} is not writable, please change the permissions"
+		return 1
+	fi
+	_toPkcs "${HOST_P12}" "$_ckey" "$_ccert" "$_cca" "$PASS" unifi root
+	if [ "$?" != "0" ]; then
+		_err "Error generating pkcs12.  Please run again with --deubg and report a bug"
+		return 1
+	fi
 
 	docker exec -it ${UNIFI_CONTAINER} /usr/bin/cp ${CNT_DATADIR}/keystore ${CNT_DATADIR}/keystore.bak
 	
@@ -46,5 +82,11 @@ unifi_docker_deploy() {
 		   -destkeystore ${CNT_DATADIR}/keystore -srckeystore ${CNT_DATADIR}/${P12} \
 		   -srcstoretype PKCS12 -srcstorepass ${PASS} -alias unifi -noprompt
 
-	cd ${HOME}/unifi && docker compose restart ${UNIFI_CONTAINER}
+	rm "${HOST_P12}"
+
+	cd "${UNIFI_DOCKER_DIR}" && docker compose restart "${UNIFI_CONTAINER}"
+
+	_savedeployconf UNIFI_DOCKER_DIR "${UNIFI_DOCKER_DIR}"
+	_savedeployconf HOST_DATADIR "${HOST_DATADIR}"
+	_savedeployconf UNIFI_CONTAINER "${UNIFI_CONTAINER}"
 }
