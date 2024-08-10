@@ -1,4 +1,4 @@
-## unifi application with mongodb docker-compose.yml that runs on pi3/4
+## unifi application with mongodb docker-compose.yml that runs on pi3/4/5
 
 clone this into a directory
 
