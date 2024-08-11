@@ -1,4 +1,6 @@
-## unifi application with mongodb docker-compose.yml that runs on pi3/4/5
+## unifi application with mongodb docker-compose.yml that runs on raspberry pi (among others)
+
+Uses the [linuxserver.io unifi image ](https://docs.linuxserver.io/images/docker-unifi-network-application/) as well as the [official mongo docker image](https://hub.docker.com/_/mongo)
 
 clone this into a directory
 
@@ -23,7 +25,7 @@ docker compose up -d and enjoy!
 
 Included also is an [acme.sh](https://github.com/acmesh-official/acme.sh) [deploy hook](unifi_docker.sh) meant to be run on the docker host without requiring the docker container to have network access, and without requiring the docker host to have a jdk / keytool installed.  This allows us to use zerossl / letsencrypt to generate TLS certificates for our web UI.
 
-In order to use the deploy hook, you'll need to symlink this script into place, as an example when running from the base directory of this repository:
+In order to use the deploy hook, first make sure you have created a certificate for the domain you plan to use for your unifi controller.  Next you'll need to symlink the `unifi_docker.sh` script into the acme deploy hook directory.  For example:
 
     ln -s $(pwd)/unifi_docker.sh ~/.acme.sh/deploy/
 
