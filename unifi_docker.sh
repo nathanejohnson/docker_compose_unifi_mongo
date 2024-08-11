@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 # acme.sh deploy hook, place or symlink into your ${HOME}/.acme.sh/deploy directory
 
@@ -89,4 +89,5 @@ unifi_docker_deploy() {
 	_savedeployconf UNIFI_DOCKER_DIR "${UNIFI_DOCKER_DIR}"
 	_savedeployconf UNIFI_HOST_DATA_DIR "${UNIFI_HOST_DATA_DIR}"
 	_savedeployconf UNIFI_CONTAINER "${UNIFI_CONTAINER}"
+	return 0
 }
