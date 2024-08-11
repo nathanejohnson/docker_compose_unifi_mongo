@@ -40,7 +40,7 @@ Set this if you're moved the /config/data mount volume mount location.  Defaults
 Set this if you've changed the name of the unifi container.  Defaults to `unifi-network-application`
 
 This deploy hook saves the state of these environment variables into the acme.sh configuration variables, so it should persist when running subsequently from cron after the initial invocation.
-In other words, no need to set these environment variables again after the initial successful invocation.  If something goes wrong, pass the --debug flag to
+In other words, no need to set these environment variables again after the initial successful invocation.  If something goes wrong, pass the `--debug` flag to
 acme.sh
 
 ### NOTE: if you're on a raspberry PI, you need to do this in order for ipvlan / macvlan networks to work (assuing ubuntu or likely debian) and reboot:
