@@ -27,21 +27,19 @@ In order to use the deploy hook, you'll need to symlink this script into place, 
 
     ln -s $(pwd)/unifi_docker.sh ~/.acme.sh/deploy/
 
-And you'll need to initially set the environment variable `UNIFI_DOCKER_DIR` to the location where you cloned this repository.  If you run the command from the repo root directory, you could do something like so:
+There are three optional environment / configuration variables that can influence behavior.  The first is 
 
-    UNIFI_DOCKER_DIR=$(pwd) acme.sh --deploy -d unifi.testorg.com --deploy-hook unifi_docker
+    UNIFI_DOCKER_DIR
 
-If this variable isn't set, it will attempt to use `${HOME}/docker_compose_unifi_mongo` if it exists.  Otherwise it will error out.
-
-There are two other variables that can be set:
+This is used to indicate the location on disk where this repository is cloned.  If this variable isn't set, it will attempt to use pull the docker compose file location out of the output from a docker inspect command, and failing that,  `${HOME}/docker_compose_unifi_mongo` if it exists.  Otherwise it will error out, unless `UNIFI_HOST_DATA_DIR` is set explicitly.  Normally the docker inspect should do the right thing.
 
     UNIFI_HOST_DATA_DIR
-if you're moved the unifi data directory volume mount location.  Defaults to `"${UNIFI_DOCKER_DIR}/unifi-data/data"`
+Set this if you're moved the /config/data mount volume mount location.  Defaults to `"${UNIFI_DOCKER_DIR}/unifi-data/data"`
 
     UNIFI_CONTAINER_NAME
-if you've changed the name of the unifi container.  Defaults to `unifi-network-application`
+Set this if you've changed the name of the unifi container.  Defaults to `unifi-network-application`
 
-This deploy hook saves the state into the acme.sh configuration variables, so it should persist when running subsequently from cron after the initial invocation.
+This deploy hook saves the state of these environment variables into the acme.sh configuration variables, so it should persist when running subsequently from cron after the initial invocation.
 In other words, no need to set these environment variables again after the initial successful invocation.  If something goes wrong, pass the --debug flag to
 acme.sh
 

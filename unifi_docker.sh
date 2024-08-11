@@ -30,40 +30,63 @@ unifi_docker_deploy() {
 		return 1
 	fi
 
-	_getdeployconf UNIFI_DOCKER_DIR
-	_default_dcumd="${HOME}/docker_compose_unifi_mongo"
-	if [ -z "$UNIFI_DOCKER_DIR" ]; then
-		if [ -d ${_default_dcumd} ]; then
-			_debug "using ${_default_dcumd} as default UNIFI_DOCKER_DIR"
-			UNIFI_DOCKER_DIR="${_default_dcumd}"
-		else
-			_err "must set UNIFI_DOCKER_DIR environment variable to the directory where the docker_compose_unifi_mongo repository was cloned"
-			return 1
-		fi
-	fi
-	_debug "UNIFI_DOCKER_DIR is ${UNIFI_DOCKER_DIR}"
-
-	_getdeployconf UNIFI_HOST_DATA_DIR
-	if [ -z "${UNIFI_HOST_DATA_DIR}" ]; then
-		UNIFI_HOST_DATA_DIR="${UNIFI_DOCKER_DIR}/unifi-data/data"
-	fi
-	_debug "UNIFI_HOST_DATA_DIR is $UNIFI_HOST_DATA_DIR"
 
 	_getdeployconf UNIFI_CONTAINER
 	if [ -z "${UNIFI_CONTAINER}" ]; then
 		UNIFI_CONTAINER=unifi-network-application
 	fi
 
+	if ! docker ps | grep ${UNIFI_CONTAINER} > /dev/null; then
+		_err "docker container not running"
+		return 1
+	fi
+	_dinsp=$(docker inspect "${UNIFI_CONTAINER}")
+	if [ "$?" != "0" ]; then
+	   _err "docker inspect failed"
+	   return 1
+	fi
+
+	_debug "docker inspect output:
+${_dinsp}"
+
 	_debug "UNIFI_CONTAINER is ${UNIFI_CONTAINER}"
+
+	_getdeployconf UNIFI_DOCKER_DIR
+	_default_dcumd="${HOME}/docker_compose_unifi_mongo"
+
+	_getdeployconf UNIFI_HOST_DATA_DIR
+
+	if [ -z "$UNIFI_DOCKER_DIR" ]; then
+		_dcyml=$(echo "${_dinsp}"  | grep com.docker.compose.project.config_files | sed -E 's/[^:]*: "([^"]*)",?$/\1/')
+		_debug "dcyml: ${_dcyml}"
+		if [ ! -z $_dcyml ]; then
+			_debug "using ${_dcyml} location from ${UNIFI_CONTAINER} container inspection as basis of UNIFI_DOCKER_DIR"
+			UNIFI_DOCKER_DIR=$(dirname $_dcyml)
+		elif [ -d "${_default_dcumd}" ]; then
+			_debug "using ${_default_dcumd} as default UNIFI_DOCKER_DIR"
+			UNIFI_DOCKER_DIR="${_default_dcumd}"
+		elif [ -z "${UNIFI_HOST_DATA_DIR}" ]; then
+			_err "must set UNIFI_DOCKER_DIR or UNIFI_HOST_DATA_DIR environment variable"
+			return 1
+		fi
+	fi
+	_debug "UNIFI_DOCKER_DIR is ${UNIFI_DOCKER_DIR}"
+
+
+	if [ -z "${UNIFI_HOST_DATA_DIR}" ]; then
+		UNIFI_HOST_DATA_DIR="${UNIFI_DOCKER_DIR}/unifi-data/data"
+	fi
+	_debug "UNIFI_HOST_DATA_DIR is $UNIFI_HOST_DATA_DIR"
+
 
 	# this password is the default keystore passphrase for unifi network application, probably keep that the same.
 	PASS=aircontrolenterprise
 
 	P12="${_cdomain}.p12"
-	CNT_DATA_DIR=/usr/lib/unifi/data
+	CNT_DATA_DIR=/config/data
 	KEYTOOL=/usr/bin/keytool
+	CP=/usr/bin/cp
 	HOST_P12="${UNIFI_HOST_DATA_DIR}/${P12}"
-	set -e
 	if [ ! -w $(dirname "${HOST_P12}") ]; then
 		_err "The file ${HOST_P12} is not writable, please change the permissions"
 		return 1
@@ -74,17 +97,21 @@ unifi_docker_deploy() {
 		return 1
 	fi
 
-	docker exec -it ${UNIFI_CONTAINER} /usr/bin/cp ${CNT_DATA_DIR}/keystore ${CNT_DATA_DIR}/keystore.bak
-	
+	_debug "backing up keystore"
+	docker exec -it ${UNIFI_CONTAINER} ${CP} ${CNT_DATA_DIR}/keystore ${CNT_DATA_DIR}/keystore.bak
+
+	_debug "deleting existing unifi entry from keystore"
 	docker exec -it ${UNIFI_CONTAINER} ${KEYTOOL} -delete -alias unifi -keystore ${CNT_DATA_DIR}/keystore -deststorepass ${PASS} || true
-	
+
+	_debug "importing exported p12 into keystore as unifi"
 	docker exec -it ${UNIFI_CONTAINER} ${KEYTOOL} -importkeystore -deststorepass ${PASS} -destkeypass ${PASS} \
 		   -destkeystore ${CNT_DATA_DIR}/keystore -srckeystore ${CNT_DATA_DIR}/${P12} \
 		   -srcstoretype PKCS12 -srcstorepass ${PASS} -alias unifi -noprompt
 
+	_debug "deleting exported p12 from disk"
 	rm "${HOST_P12}"
-
-	cd "${UNIFI_DOCKER_DIR}" && docker compose restart "${UNIFI_CONTAINER}"
+	_debug "restarting ${UNIFI_CONTAINER}"
+	docker restart "${UNIFI_CONTAINER}"
 
 	_savedeployconf UNIFI_DOCKER_DIR "${UNIFI_DOCKER_DIR}"
 	_savedeployconf UNIFI_HOST_DATA_DIR "${UNIFI_HOST_DATA_DIR}"
