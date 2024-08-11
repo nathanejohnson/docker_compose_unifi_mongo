@@ -9,7 +9,7 @@
 #tweak below as necessary
 
 # make sure to set UNIFI_DOCKER_DIR to the location where you cloned this repo.
-# additionally, you can override the values for HOST_DATADIR and UNIFI_CONTAINER
+# additionally, you can override the values for UNIFI_HOST_DATA_DIR and UNIFI_CONTAINER
 # if needed, though the defaults should work unless you've changed things
 # in the docker-compose file.
 
@@ -43,11 +43,11 @@ unifi_docker_deploy() {
 	fi
 	_debug "UNIFI_DOCKER_DIR is ${UNIFI_DOCKER_DIR}"
 
-	_getdeployconf HOST_DATADIR
-	if [ -z "${HOST_DATADIR}" ]; then
-		HOST_DATADIR="${UNIFI_DOCKER_DIR}/unifi-data/data"
+	_getdeployconf UNIFI_HOST_DATA_DIR
+	if [ -z "${UNIFI_HOST_DATA_DIR}" ]; then
+		UNIFI_HOST_DATA_DIR="${UNIFI_DOCKER_DIR}/unifi-data/data"
 	fi
-	_debug "HOST_DATADIR is $HOST_DATADIR"
+	_debug "UNIFI_HOST_DATA_DIR is $UNIFI_HOST_DATA_DIR"
 
 	_getdeployconf UNIFI_CONTAINER
 	if [ -z "${UNIFI_CONTAINER}" ]; then
@@ -60,9 +60,9 @@ unifi_docker_deploy() {
 	PASS=aircontrolenterprise
 
 	P12="${_cdomain}.p12"
-	CNT_DATADIR=/usr/lib/unifi/data
+	CNT_DATA_DIR=/usr/lib/unifi/data
 	KEYTOOL=/usr/bin/keytool
-	HOST_P12="${HOST_DATADIR}/${P12}"
+	HOST_P12="${UNIFI_HOST_DATA_DIR}/${P12}"
 	set -e
 	if [ ! -w $(dirname "${HOST_P12}") ]; then
 		_err "The file ${HOST_P12} is not writable, please change the permissions"
@@ -74,12 +74,12 @@ unifi_docker_deploy() {
 		return 1
 	fi
 
-	docker exec -it ${UNIFI_CONTAINER} /usr/bin/cp ${CNT_DATADIR}/keystore ${CNT_DATADIR}/keystore.bak
+	docker exec -it ${UNIFI_CONTAINER} /usr/bin/cp ${CNT_DATA_DIR}/keystore ${CNT_DATA_DIR}/keystore.bak
 	
-	docker exec -it ${UNIFI_CONTAINER} ${KEYTOOL} -delete -alias unifi -keystore ${CNT_DATADIR}/keystore -deststorepass ${PASS} || true
+	docker exec -it ${UNIFI_CONTAINER} ${KEYTOOL} -delete -alias unifi -keystore ${CNT_DATA_DIR}/keystore -deststorepass ${PASS} || true
 	
 	docker exec -it ${UNIFI_CONTAINER} ${KEYTOOL} -importkeystore -deststorepass ${PASS} -destkeypass ${PASS} \
-		   -destkeystore ${CNT_DATADIR}/keystore -srckeystore ${CNT_DATADIR}/${P12} \
+		   -destkeystore ${CNT_DATA_DIR}/keystore -srckeystore ${CNT_DATA_DIR}/${P12} \
 		   -srcstoretype PKCS12 -srcstorepass ${PASS} -alias unifi -noprompt
 
 	rm "${HOST_P12}"
@@ -87,6 +87,6 @@ unifi_docker_deploy() {
 	cd "${UNIFI_DOCKER_DIR}" && docker compose restart "${UNIFI_CONTAINER}"
 
 	_savedeployconf UNIFI_DOCKER_DIR "${UNIFI_DOCKER_DIR}"
-	_savedeployconf HOST_DATADIR "${HOST_DATADIR}"
+	_savedeployconf UNIFI_HOST_DATA_DIR "${UNIFI_HOST_DATA_DIR}"
 	_savedeployconf UNIFI_CONTAINER "${UNIFI_CONTAINER}"
 }
