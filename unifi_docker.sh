@@ -46,10 +46,9 @@ unifi_docker_deploy() {
 	   return 1
 	fi
 
-	_debug "docker inspect output:
-${_dinsp}"
+	_debug2 DINSP "${_dinsp}"
 
-	_debug "UNIFI_CONTAINER is ${UNIFI_CONTAINER}"
+	_debug UNIFI_CONTAINER "${UNIFI_CONTAINER}"
 
 	_getdeployconf UNIFI_DOCKER_DIR
 	_default_dcumd="${HOME}/docker_compose_unifi_mongo"
@@ -57,9 +56,9 @@ ${_dinsp}"
 	_getdeployconf UNIFI_HOST_DATA_DIR
 
 	if [ -z "$UNIFI_DOCKER_DIR" ]; then
-		_dcyml=$(echo "${_dinsp}"  | grep com.docker.compose.project.config_files | sed -E 's/[^:]*: "([^"]*)",?$/\1/')
-		_debug "dcyml: ${_dcyml}"
-		if [ ! -z $_dcyml ]; then
+		_dcyml=$(echo "${_dinsp}"  | grep com.docker.compose.project.config_files | sed -E 's/^[^:]*: "([^"]*)",?$/\1/')
+		_debug dcyml "${_dcyml}"
+		if [ ! -z "${_dcyml}" ] && [ -f "${_dcyml}" ]; then
 			_debug "using ${_dcyml} location from ${UNIFI_CONTAINER} container inspection as basis of UNIFI_DOCKER_DIR"
 			UNIFI_DOCKER_DIR=$(dirname $_dcyml)
 		elif [ -d "${_default_dcumd}" ]; then
@@ -70,13 +69,13 @@ ${_dinsp}"
 			return 1
 		fi
 	fi
-	_debug "UNIFI_DOCKER_DIR is ${UNIFI_DOCKER_DIR}"
+	_debug UNIFI_DOCKER_DIR "${UNIFI_DOCKER_DIR}"
 
 
 	if [ -z "${UNIFI_HOST_DATA_DIR}" ]; then
 		UNIFI_HOST_DATA_DIR="${UNIFI_DOCKER_DIR}/unifi-data/data"
 	fi
-	_debug "UNIFI_HOST_DATA_DIR is $UNIFI_HOST_DATA_DIR"
+	_debug UNIFI_HOST_DATA_DIR "$UNIFI_HOST_DATA_DIR"
 
 
 	# this password is the default keystore passphrase for unifi network application, probably keep that the same.
