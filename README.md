@@ -23,7 +23,7 @@ As an example, this is how I created my vlan network for my management network, 
 docker compose up -d and enjoy!
 
 
-Included also is an [acme.sh](https://github.com/acmesh-official/acme.sh) [deploy hook](unifi_docker.sh) meant to be run on the docker host without requiring the docker container to have network access, and without requiring the docker host to have a jdk / keytool installed.  This allows us to use zerossl / letsencrypt to generate TLS certificates for our web UI.
+Included also is an [acme.sh](https://github.com/acmesh-official/acme.sh) [deploy hook](unifi_docker.sh) meant to be run on the docker host without requiring the docker container to have network access.  This allows us to use zerossl / letsencrypt to generate TLS certificates for our web UI.
 
 In order to use the deploy hook, first make sure you have created a certificate for the domain you plan to use for your unifi controller.  Next you'll need to symlink the `unifi_docker.sh` script into the acme deploy hook directory.  For example:
 

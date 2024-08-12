@@ -82,34 +82,20 @@ ${_dinsp}"
 	# this password is the default keystore passphrase for unifi network application, probably keep that the same.
 	PASS=aircontrolenterprise
 
-	P12="${_cdomain}.p12"
-	CNT_DATA_DIR=/config/data
-	KEYTOOL=/usr/bin/keytool
-	CP=/usr/bin/cp
-	HOST_P12="${UNIFI_HOST_DATA_DIR}/${P12}"
-	if [ ! -w $(dirname "${HOST_P12}") ]; then
-		_err "The file ${HOST_P12} is not writable, please change the permissions"
+
+	KEYSTORE=${UNIFI_HOST_DATA_DIR}/keystore
+	if [ ! -w "${KEYSTORE}" ]; then
+		_err "The file ${KEYSTORE} is not writable, please change the permissions"
 		return 1
 	fi
-	_toPkcs "${HOST_P12}" "$_ckey" "$_ccert" "$_cca" "$PASS" unifi root
+	cp "${KEYSTORE}" "${KEYSTORE}.bak"
+	_toPkcs "${KEYSTORE}" "$_ckey" "$_ccert" "$_cca" "$PASS" unifi root
 	if [ "$?" != "0" ]; then
+		mv "${KEYSTORE}.bak" "${KEYSTORE}"
 		_err "Error generating pkcs12.  Please run again with --deubg and report a bug"
 		return 1
 	fi
 
-	_debug "backing up keystore"
-	docker exec -it ${UNIFI_CONTAINER} ${CP} ${CNT_DATA_DIR}/keystore ${CNT_DATA_DIR}/keystore.bak
-
-	_debug "deleting existing unifi entry from keystore"
-	docker exec -it ${UNIFI_CONTAINER} ${KEYTOOL} -delete -alias unifi -keystore ${CNT_DATA_DIR}/keystore -deststorepass ${PASS} || true
-
-	_debug "importing exported p12 into keystore as unifi"
-	docker exec -it ${UNIFI_CONTAINER} ${KEYTOOL} -importkeystore -deststorepass ${PASS} -destkeypass ${PASS} \
-		   -destkeystore ${CNT_DATA_DIR}/keystore -srckeystore ${CNT_DATA_DIR}/${P12} \
-		   -srcstoretype PKCS12 -srcstorepass ${PASS} -alias unifi -noprompt
-
-	_debug "deleting exported p12 from disk"
-	rm "${HOST_P12}"
 	_debug "restarting ${UNIFI_CONTAINER}"
 	docker restart "${UNIFI_CONTAINER}"
 
