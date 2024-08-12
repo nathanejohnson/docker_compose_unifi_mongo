@@ -92,7 +92,7 @@ ${_dinsp}"
 	_toPkcs "${KEYSTORE}" "$_ckey" "$_ccert" "$_cca" "$PASS" unifi root
 	if [ "$?" != "0" ]; then
 		mv "${KEYSTORE}.bak" "${KEYSTORE}"
-		_err "Error generating pkcs12.  Please run again with --deubg and report a bug"
+		_err "Error generating pkcs12.  Please run again with --debug and report a bug"
 		return 1
 	fi
 
